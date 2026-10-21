@@ -8,13 +8,17 @@ use [rayon-sdk-js](https://github.com/Rayon-API/rayon-sdk-js) without Playwright
 [Required inputs](https://docs.rayonapi.com/material) ·
 [Collection, profiles, limits and errors](docs/reference.md)
 
-Release pending. Install from a reviewed local checkout for now:
+Source is public; the npm release is pending. Build a source checkout:
 
 ```sh
-npm install /absolute/path/to/rayon-sdk-playwright playwright-core
+git clone https://github.com/Rayon-API/rayon-sdk-playwright.git
+cd rayon-sdk-playwright
+npm ci
+npm run build
 ```
 
-After publication: `npm install rayon-sdk-playwright playwright-core`.
+In your application: `npm install /absolute/path/to/rayon-sdk-playwright`.
+After the npm release: `npm install rayon-sdk-playwright playwright-core`.
 
 Use your existing Playwright installation and browser. Requires Node.js 20.18.1+;
 includes ESM, CommonJS and TypeScript. The adapter downloads or launches no browser.
