@@ -71,3 +71,26 @@ Development: `npm ci`, `npx playwright-core install chromium`, `npm test`,
 `npm run build`, `npm run test:package`. Tests use local fixtures only. Set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to reuse a browser. See
 [release instructions](RELEASE.md), [security](SECURITY.md), and [license](LICENSE).
+
+## Explicit server preparation (1.0.0)
+
+This release requires `rayon-sdk-js` 2.0.0 and the coordinated backend preparation
+API deployment. `collectMaterial` only collects local material. It returns
+`CollectedMaterial`; the previous `PreparedMaterial` name remains a deprecated
+alias for compatibility and does not imply server readiness.
+
+```ts
+const collected = await sdk.collectMaterial(page, collectionOptions);
+const generationContext = { request: targetRequest };
+const queued = await sdk.prepareMaterial(collected, generationContext);
+const ready = await sdk.waitUntilReady(queued.preparation_id, { waitTimeoutMs: 60_000 });
+// Or: await sdk.prepareAndWait(collected, generationContext, { waitTimeoutMs: 60_000 });
+const generated = await sdk.generate(collected, generationContext);
+```
+
+Preparation uses the complete supplied context and returns safe server metadata.
+Generation always remains explicit. `getPreparation(id, { wait: 0 })` reads status;
+`waitUntilReady` retries transient GET failures with jitter and bounds long polls by
+its monotonic budget. Aborting a wait leaves the server job running and the typed
+error retains a safe `preparationId` for resumption. No preparation readiness cache
+is shared with the source-only generation cache.

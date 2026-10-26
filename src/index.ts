@@ -1,14 +1,16 @@
 import {
     RayonClient,
     type ClientOptions, type RequestOptions, type TargetRequest,
+    type MaterialPreparation, type ReadyMaterial, type PreparationOptions, type WaitUntilReadyOptions,
     type FormMetadata, type ShapeResult, type FormShapeResult, type UsageResult,
 } from 'rayon-sdk-js';
 import type { Page } from 'playwright-core';
-import { collect, validateOptions, MaterialCollectionError, type PreparedMaterial, type CollectOptions } from './collector.js';
+import { collect, validateOptions, MaterialCollectionError, type CollectedMaterial, type CollectOptions } from './collector.js';
 export { MaterialCollectionError } from './collector.js';
-export type { PreparedMaterial, CollectOptions, CollectionErrorCode } from './collector.js';
+export type { CollectedMaterial, PreparedMaterial, CollectOptions, CollectionErrorCode } from './collector.js';
 export { RayonError, validate_profile } from 'rayon-sdk-js';
 export type {
+    MaterialPreparation, ReadyMaterial, PreparationState, PreparationError, PreparationOptions, GetPreparationOptions, WaitUntilReadyOptions,
     BrowserProfile, ScriptMaterial, TargetRequest, FormMetadata, ClientOptions,
     RequestOptions, ShapeResult, FormShapeResult, UsageResult,
 } from 'rayon-sdk-js';
@@ -33,7 +35,7 @@ export class RayonPlaywright {
     [Symbol.for('nodejs.util.inspect.custom')]() {
         return { client: 'RayonPlaywright', credentials: '[REDACTED]', closed: this.#closed };
     }
-    async collectMaterial(page: Page, options: CollectOptions): Promise<PreparedMaterial> {
+    async collectMaterial(page: Page, options: CollectOptions): Promise<CollectedMaterial> {
         if (this.#closed)
             throw new MaterialCollectionError('disposed');
         validateOptions(options);
@@ -48,11 +50,24 @@ export class RayonPlaywright {
             this.#collections.delete(page);
         }
     }
-    generate(material: PreparedMaterial, input: HeaderGeneration, options?: RequestOptions): Promise<ShapeResult>;
-    generate(material: PreparedMaterial, input: FormGeneration, options?: RequestOptions): Promise<FormShapeResult>;
-    generate(material: PreparedMaterial, input: HeaderGeneration | FormGeneration, options?: RequestOptions): Promise<ShapeResult | FormShapeResult>;
-    generate(material: PreparedMaterial, input: HeaderGeneration | FormGeneration, options?: RequestOptions): Promise<ShapeResult | FormShapeResult> {
+    generate(material: CollectedMaterial, input: HeaderGeneration, options?: RequestOptions): Promise<ShapeResult>;
+    generate(material: CollectedMaterial, input: FormGeneration, options?: RequestOptions): Promise<FormShapeResult>;
+    generate(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: RequestOptions): Promise<ShapeResult | FormShapeResult>;
+    generate(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: RequestOptions): Promise<ShapeResult | FormShapeResult> {
         return this.#client.generate({ ...material, ...input }, options);
+    }
+    /** Starts server preparation with the exact generation context. Collection alone never prepares. */
+    prepareMaterial(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: PreparationOptions): Promise<MaterialPreparation> {
+        return this.#client.prepare({ ...material, ...input }, options);
+    }
+    prepareAndWait(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: WaitUntilReadyOptions): Promise<ReadyMaterial> {
+        return this.#client.prepareAndWait({ ...material, ...input }, options);
+    }
+    getPreparation(id: string, options?: import('rayon-sdk-js').GetPreparationOptions): Promise<MaterialPreparation> {
+        return this.#client.getPreparation(id, options);
+    }
+    waitUntilReady(id: string, options?: WaitUntilReadyOptions): Promise<ReadyMaterial> {
+        return this.#client.waitUntilReady(id, options);
     }
     usage(options?: RequestOptions): Promise<UsageResult> {
         return this.#client.usage(options);
