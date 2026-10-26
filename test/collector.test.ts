@@ -17,7 +17,7 @@ before(async () => {
         if (req.url === '/page') {
             res.setHeader('Content-Type', 'text/html');
             res.setHeader('Set-Cookie', ['visible=local; Path=/', 'hidden=local; HttpOnly; Path=/']);
-            res.end(`<script src="/b.js"></script><script src="/a.js"></script><script src="${other}/cross.js"></script>`);
+            res.end(`<link rel="icon" href="data:,"><script src="/b.js"></script><script src="/a.js"></script><script src="${other}/cross.js"></script>`);
         }
         else if (req.url === '/bom.js') {
             res.setHeader('Content-Type', 'application/javascript');
