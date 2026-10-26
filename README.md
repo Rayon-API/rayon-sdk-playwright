@@ -51,7 +51,7 @@ Apply returned `headers` unchanged using your existing target client/session.
 The adapter never sends the target request or applies output automatically.
 Keep one client across generations for material caching. Supply the exact current
 request every time; recollect or update snapshots when scripts, profile or cookies
-change. Prepared `{ source_url, scripts, profile, document_cookie? }` also works
+change. Collected `{ source_url, scripts, profile, document_cookie? }` also works
 with `generate` directly. Form mode returns `form_fields` and `form_body`.
 
 Collection observes only the explicitly listed main-frame script requests started
@@ -74,8 +74,10 @@ Development: `npm ci`, `npx playwright-core install chromium`, `npm test`,
 
 ## Explicit server preparation (1.0.0)
 
-This release requires `rayon-sdk-js` 2.0.0 and the coordinated backend preparation
-API deployment. `collectMaterial` only collects local material. It returns
+This release uses `rayon-sdk-js` 2.0.0 with the available additive preparation API.
+Legacy generation remains available; mandatory preparation is not enabled. A
+30-day migration window and cutoff will be announced separately; no cutoff date
+is set. `collectMaterial` only collects local material. It returns
 `CollectedMaterial`; the previous `PreparedMaterial` name remains a deprecated
 alias for compatibility and does not imply server readiness.
 
