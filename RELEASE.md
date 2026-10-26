@@ -33,3 +33,12 @@ trusted publishing against the exact repository, workflow and environment before
 adding a publish workflow. The included CI intentionally has no publish job,
 registry credentials or deployment permissions. Never pack customer fixtures,
 private captured material, keys, cookies or node_modules.
+
+
+## Preparation release gate
+
+Publish only after the coordinated backend preparation API is deployed and its
+POST/GET contract has been checked. Run the complete tests, ESM/CJS builds and
+package declaration consumers. Generation signatures and result frames are unchanged.
+No package has been published as part of this source update.
+Publish core 2.0.0 first, then this adapter 1.0.0. The lockfile new core entry has no fabricated integrity; resolve its integrity from the actual published tarball during release. Package verification here uses existing local dependencies without installing.

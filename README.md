@@ -51,7 +51,7 @@ Apply returned `headers` unchanged using your existing target client/session.
 The adapter never sends the target request or applies output automatically.
 Keep one client across generations for material caching. Supply the exact current
 request every time; recollect or update snapshots when scripts, profile or cookies
-change. Prepared `{ source_url, scripts, profile, document_cookie? }` also works
+change. Collected `{ source_url, scripts, profile, document_cookie? }` also works
 with `generate` directly. Form mode returns `form_fields` and `form_body`.
 
 Collection observes only the explicitly listed main-frame script requests started
@@ -71,3 +71,28 @@ Development: `npm ci`, `npx playwright-core install chromium`, `npm test`,
 `npm run build`, `npm run test:package`. Tests use local fixtures only. Set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to reuse a browser. See
 [release instructions](RELEASE.md), [security](SECURITY.md), and [license](LICENSE).
+
+## Explicit server preparation (1.0.0)
+
+This release uses `rayon-sdk-js` 2.0.0 with the available additive preparation API.
+Legacy generation remains available; mandatory preparation is not enabled. A
+30-day migration window and cutoff will be announced separately; no cutoff date
+is set. `collectMaterial` only collects local material. It returns
+`CollectedMaterial`; the previous `PreparedMaterial` name remains a deprecated
+alias for compatibility and does not imply server readiness.
+
+```ts
+const collected = await sdk.collectMaterial(page, collectionOptions);
+const generationContext = { request: targetRequest };
+const queued = await sdk.prepareMaterial(collected, generationContext);
+const ready = await sdk.waitUntilReady(queued.preparation_id, { waitTimeoutMs: 60_000 });
+// Or: await sdk.prepareAndWait(collected, generationContext, { waitTimeoutMs: 60_000 });
+const generated = await sdk.generate(collected, generationContext);
+```
+
+Preparation uses the complete supplied context and returns safe server metadata.
+Generation always remains explicit. `getPreparation(id, { wait: 0 })` reads status;
+`waitUntilReady` retries transient GET failures with jitter and bounds long polls by
+its monotonic budget. Aborting a wait leaves the server job running and the typed
+error retains a safe `preparationId` for resumption. No preparation readiness cache
+is shared with the source-only generation cache.

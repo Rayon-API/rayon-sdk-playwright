@@ -1,11 +1,14 @@
 import type { Page, Request, Response, Frame } from 'playwright-core';
 import { validate_profile, type BrowserProfile, type ScriptMaterial } from 'rayon-sdk-js';
-export interface PreparedMaterial {
+export interface CollectedMaterial {
     source_url: string;
     scripts: ScriptMaterial[];
     profile: BrowserProfile;
     document_cookie?: string;
 }
+/** @deprecated Collection is not server readiness. Use CollectedMaterial. */
+export type PreparedMaterial = CollectedMaterial;
+
 export interface CollectOptions {
     /** Absolute HTTP(S) URLs, in the exact order to pass to Rayon. */
     scriptUrls: readonly string[];
@@ -47,7 +50,7 @@ export function validateOptions(options: CollectOptions): void {
         throw new MaterialCollectionError('invalid_options');
 }
 /** Passive observation only: never fetches missing scripts or submits the target request. */
-export async function collect(page: Page, options: CollectOptions, controller: AbortController): Promise<PreparedMaterial> {
+export async function collect(page: Page, options: CollectOptions, controller: AbortController): Promise<CollectedMaterial> {
     validateOptions(options);
     const urls = [...options.scriptUrls], expected = new Set(urls);
     let active = true, actionDone = false, epoch = 0, navigations = 0, total = 0;
