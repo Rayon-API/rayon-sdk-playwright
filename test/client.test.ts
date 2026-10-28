@@ -71,3 +71,9 @@ test('preserves unknown billing outcomes without retrying or target submission',
     assert.equal(bodies.length, 1);
     assert.deepEqual(paths, ['/v1/shape']);
 }, true));
+
+ test('managed generation sends no collected scripts or reference', async () => api(async (sdk, bodies) => {
+ const shape = {source_url:material.source_url, profile:material.profile, request};
+ for(let i=0;i<2;i++) await sdk.generateManaged(shape);
+ for(const body of bodies) {assert.ok(!Object.hasOwn(body,'scripts'));assert.ok(!Object.hasOwn(body,'material_ref'));assert.deepEqual(body.request,request);}
+ }));

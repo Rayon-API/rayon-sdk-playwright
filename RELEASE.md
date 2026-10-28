@@ -35,10 +35,10 @@ registry credentials or deployment permissions. Never pack customer fixtures,
 private captured material, keys, cookies or node_modules.
 
 
-## Preparation release gate
+## Managed-material release gate
 
-Publish only after the coordinated backend preparation API is deployed and its
-POST/GET contract has been checked. Run the complete tests, ESM/CJS builds and
-package declaration consumers. Generation signatures and result frames are unchanged.
-No package has been published as part of this source update.
-Publish core 2.0.0 first, then this adapter 1.0.0. The lockfile new core entry has no fabricated integrity; resolve its integrity from the actual published tarball during release. Package verification here uses existing local dependencies without installing.
+Publish core JS 2.1.0 first, then adapter 1.1.0. Verify managed generation,
+existing collection and preparation, ESM/CJS builds and declaration consumers.
+Regenerate the core dependency lock entry from the published tarball before
+adapter publication; do not invent an integrity hash. The candidate uses the
+local core package for offline verification. No package is published by this work.

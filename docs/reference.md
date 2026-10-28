@@ -1,5 +1,13 @@
 # Playwright adapter reference
 
+## Managed generation
+
+`generateManaged({ source_url, profile, request, document_cookie? }, options?)`
+uses current registered public material in header mode. Omit both material fields
+on every automatic call. It needs no page or collector. `fallback_reason` and
+`fallback_message` are retained by the core SDK; report fallback with the request
+ID. Explicit `generate(material, input, options?)` remains unchanged.
+
 ## Collection contract
 
 The collector passively observes main-frame script requests started during the

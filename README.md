@@ -1,21 +1,58 @@
 # Rayon Playwright SDK
 
-Optional collection for integrations already using Playwright. Your integration
-owns the existing page, browser context and target session. Prepared inputs can
-use [rayon-sdk-js](https://github.com/Rayon-API/rayon-sdk-js) without Playwright.
-
-[Quickstart](https://docs.rayonapi.com/quickstart) ·
-[Required inputs](https://docs.rayonapi.com/material) ·
-[Collection, profiles, limits and errors](docs/reference.md)
+Use managed public material without collecting scripts. Your integration keeps
+control of its browser, HTTP client and target session. The adapter never launches
+a browser or sends the target request.
 
 ## Install
 
+Requires Node.js 20.18.1+ and your existing Playwright setup. ESM, CommonJS and
+TypeScript are included.
+
 ```sh
-npm install rayon-sdk-playwright playwright-core
+npm install rayon-sdk-playwright@^1.1.0 playwright-core
 ```
 
-Use your existing Playwright installation and browser. Requires Node.js 20.18.1+;
-includes ESM, CommonJS and TypeScript. The adapter downloads or launches no browser.
+## Generate with managed material
+
+```typescript
+import { RayonPlaywright } from 'rayon-sdk-playwright';
+
+const apiKey = process.env.RAYON_API_KEY;
+if (!apiKey) throw new Error('Set RAYON_API_KEY');
+const client = new RayonPlaywright(apiKey);
+try {
+  const result = await client.generateManaged({
+    source_url: 'https://shop.example.com/account',
+    profile: {},
+    request: {
+      url: 'https://shop.example.com/api/check', method: 'POST',
+      content_type: 'application/json', body: '{}',
+    },
+  });
+  if (result.fallback_reason) {
+    console.warn('A fallback was used. Contact support with request ID:', result.request_id);
+  }
+  // Apply every result.headers entry, including optional a0, with your target client.
+} finally {
+  await client.close();
+}
+```
+
+Replace the reserved URLs with your approved supported public source and endpoint.
+`profile: {}` uses defaults; supply measured values when needed. Keep `scripts`
+and `material_ref` omitted on later automatic calls so updates are selected.
+No page capture or preparation is required for this flow. Managed form mode is
+not supported; use explicit material for form telemetry.
+
+Fallback and operation metadata come from the core SDK. A non-null
+`fallback_reason` means a fallback was used; report the request ID to support.
+Timing alone does not identify fallback. Customer uploads stay private.
+
+## Optional collection from an existing page
+
+Use collection when you need to supply your own material. You own the `Page`,
+profile and session. Collection does not establish server readiness.
 
 ```typescript
 import { RayonPlaywright } from 'rayon-sdk-playwright';
@@ -49,7 +86,7 @@ async function generateForPage(page: Page) {
 
 Apply returned `headers` unchanged using your existing target client/session.
 The adapter never sends the target request or applies output automatically.
-Keep one client across generations for material caching. Supply the exact current
+Keep one client across generations for connection pooling and explicit material reuse. Supply the exact current
 request every time; recollect or update snapshots when scripts, profile or cookies
 change. Collected `{ source_url, scripts, profile, document_cookie? }` also works
 with `generate` directly. Form mode returns `form_fields` and `form_body`.
@@ -72,27 +109,24 @@ Development: `npm ci`, `npx playwright-core install chromium`, `npm test`,
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to reuse a browser. See
 [release instructions](RELEASE.md), [security](SECURITY.md), and [license](LICENSE).
 
-## Explicit server preparation (1.0.0)
+## Optional server preparation
 
-This release uses `rayon-sdk-js` 2.0.0 with the available additive preparation API.
-Legacy generation remains available; mandatory preparation is not enabled. A
-30-day migration window and cutoff will be announced separately; no cutoff date
-is set. `collectMaterial` only collects local material. It returns
-`CollectedMaterial`; the previous `PreparedMaterial` name remains a deprecated
-alias for compatibility and does not imply server readiness.
+`collectMaterial` returns `CollectedMaterial`; the deprecated `PreparedMaterial`
+alias means collected inputs, not server readiness. To check explicit material
+before a workload:
 
-```ts
-const collected = await sdk.collectMaterial(page, collectionOptions);
-const generationContext = { request: targetRequest };
-const queued = await sdk.prepareMaterial(collected, generationContext);
-const ready = await sdk.waitUntilReady(queued.preparation_id, { waitTimeoutMs: 60_000 });
-// Or: await sdk.prepareAndWait(collected, generationContext, { waitTimeoutMs: 60_000 });
-const generated = await sdk.generate(collected, generationContext);
+```typescript
+const collected = await client.collectMaterial(page, collectionOptions);
+const job = await client.prepareMaterial(collected, { request: targetRequest });
+const ready = await client.waitUntilReady(job.preparation_id, { waitTimeoutMs: 60_000 });
+// Or: await client.prepareAndWait(collected, { request: targetRequest });
+const result = await client.generate(collected, { request: targetRequest });
 ```
 
-Preparation uses the complete supplied context and returns safe server metadata.
-Generation always remains explicit. `getPreparation(id, { wait: 0 })` reads status;
-`waitUntilReady` retries transient GET failures with jitter and bounds long polls by
-its monotonic budget. Aborting a wait leaves the server job running and the typed
-error retains a safe `preparationId` for resumption. No preparation readiness cache
-is shared with the source-only generation cache.
+`getPreparation` and bounded wait helpers remain available. Wait timeout or abort
+leaves the server job running; resume with the typed error's `preparationId`.
+Usable validated defaulted mappings can become ready. Required output validation
+still applies. Readiness expires separately from the source reference.
+
+[Quickstart](https://docs.rayonapi.com/quickstart) · [Adapter reference](docs/reference.md) ·
+[Release instructions](RELEASE.md)
