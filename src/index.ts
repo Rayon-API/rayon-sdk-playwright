@@ -1,6 +1,6 @@
 import {
     RayonClient,
-    type ClientOptions, type RequestOptions, type TargetRequest,
+    type ClientOptions, type RequestOptions, type TargetRequest, type HeaderShapeRequest,
     type MaterialPreparation, type ReadyMaterial, type PreparationOptions, type WaitUntilReadyOptions,
     type FormMetadata, type ShapeResult, type FormShapeResult, type UsageResult,
 } from 'rayon-sdk-js';
@@ -11,7 +11,7 @@ export type { CollectedMaterial, PreparedMaterial, CollectOptions, CollectionErr
 export { RayonError, validate_profile } from 'rayon-sdk-js';
 export type {
     MaterialPreparation, ReadyMaterial, PreparationState, PreparationError, PreparationOptions, GetPreparationOptions, WaitUntilReadyOptions,
-    BrowserProfile, ScriptMaterial, TargetRequest, FormMetadata, ClientOptions,
+    BrowserProfile, ScriptMaterial, TargetRequest, FormMetadata, ClientOptions, HeaderShapeRequest, OperationMetadata,
     RequestOptions, ShapeResult, FormShapeResult, UsageResult,
 } from 'rayon-sdk-js';
 export interface HeaderGeneration {
@@ -49,6 +49,10 @@ export class RayonPlaywright {
         finally {
             this.#collections.delete(page);
         }
+    }
+    /** Generate with managed public material; no collection is required. */
+    generateManaged(input: HeaderShapeRequest, options?: RequestOptions): Promise<ShapeResult> {
+        return this.#client.generate(input, options);
     }
     generate(material: CollectedMaterial, input: HeaderGeneration, options?: RequestOptions): Promise<ShapeResult>;
     generate(material: CollectedMaterial, input: FormGeneration, options?: RequestOptions): Promise<FormShapeResult>;

@@ -1,6 +1,6 @@
 {
   "name": "rayon-sdk-playwright",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Optional Playwright material collector for the Rayon Node SDK",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -37,7 +37,7 @@
     "test:package": "node scripts/check-package.mjs"
   },
   "dependencies": {
-    "rayon-sdk-js": "^2.0.0"
+    "rayon-sdk-js": "^2.1.0"
   },
   "peerDependencies": {
     "playwright-core": ">=1.40.0 <2"
