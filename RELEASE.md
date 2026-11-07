@@ -30,15 +30,27 @@ npm publish --access public
 
 Use immutable tags/versions; never overwrite a published version. Configure npm
 trusted publishing against the exact repository, workflow and environment before
-adding a publish workflow. The included CI intentionally has no publish job,
-registry credentials or deployment permissions. Never pack customer fixtures,
+running the release workflow. The release workflow publishes through the scoped GitHub Actions trusted publisher
+and the `npm` environment; it stores no registry token. Never pack customer fixtures,
 private captured material, keys, cookies or node_modules.
 
 
 ## Managed-material release gate
 
-Publish core JS 2.1.0 first, then adapter 1.1.0. Verify managed generation,
+Publish core JS 3.0.0-rc.1 first, then adapter 2.0.0-rc.1. Verify managed generation,
 existing collection and preparation, ESM/CJS builds and declaration consumers.
 Regenerate the core dependency lock entry from the published tarball before
 adapter publication; do not invent an integrity hash. The candidate uses the
 local core package for offline verification. No package is published by this work.
+
+## Preparation-required release candidate
+
+This branch is not published or deployed. Generation rejects raw sources and
+never uploads sources, starts learning or retries on expiry. Custom material
+must reach ready before its reference is used. Make compatible preparation available, distribute reviewed SDKs, migrate clients,
+then enforce the new solve contract. Publish core SDK major 3 before Playwright major 2.
+Keep all account/context/readiness and billing checks. Do not move published tags.
+Refresh the Playwright registry lock entry after core JS is published; the new
+core version cannot resolve from npm before that publication.
+
+The candidate lock records the locally packed core artifact. After core publication, compare its registry distribution integrity and refresh the lock before releasing this adapter.

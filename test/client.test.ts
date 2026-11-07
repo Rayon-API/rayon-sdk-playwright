@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { inspect } from 'node:util';
 import { createServer } from 'node:http';
-import { RayonPlaywright, RayonError, type PreparedMaterial } from '../src/index.js';
-const material: PreparedMaterial = { source_url: 'https://example.com/page', scripts: [{ url: 'https://example.com/owned.js', source: '/* local fixture */' }], profile: { language: 'en-GB' }, document_cookie: 'visible=private' };
+import { RayonPlaywright, RayonError, type CollectedMaterial } from '../src/index.js';
+const material: CollectedMaterial = { source_url: 'https://example.com/page', scripts: [{ url: 'https://example.com/owned.js', source: '/* local fixture */' }], profile: { language: 'en-GB' }, document_cookie: 'visible=private' };
+const readyMaterial = {source_url:material.source_url, profile:material.profile, document_cookie:material.document_cookie, material_ref:'ref_0123456789abcdef'};
 const request = { url: 'https://example.com/submit', method: 'POST', content_type: 'application/json', body: ' {"x": 1}\n' };
 const common = () => ({ request_id: 'req-fixture', generation_ms: 1, profile_used: { language: 'en-GB' }, material_ref: 'ref_0123456789abcdef', material_expires_at: new Date(Date.now() + 60000).toISOString() });
 async function api(run: (sdk: RayonPlaywright, bodies: any[], paths: string[]) => Promise<void>, failure = false) {
@@ -41,11 +42,12 @@ async function api(run: (sdk: RayonPlaywright, bodies: any[], paths: string[]) =
     }
 }
 test('delegates header/form output, exact request, fresh state, usage and cache to one core client', async () => api(async (sdk, bodies, paths) => {
-    const headers = await sdk.generate(material, { request });
+    const headers = await sdk.generate({ ...readyMaterial, request });
     const formRequest = { ...request, content_type: 'application/x-www-form-urlencoded', body: 'tag=one&tag=two&csrf=a%2Bb' };
-    const form = await sdk.generate({ ...material, profile: { language: 'fr' }, document_cookie: 'fresh=current' }, { mode: 'form', form: { id: 'fixture' }, request: formRequest });
+    const form = await sdk.generate({ ...readyMaterial, profile: { language: 'fr' }, document_cookie: 'fresh=current', mode:'form', form:{id:'fixture'}, request:formRequest });
     assert.deepEqual(bodies[0].request, request);
-    assert.deepEqual(bodies[0].scripts, material.scripts);
+    assert.equal(bodies[0].material_ref, 'ref_0123456789abcdef');
+    assert.equal(bodies[0].scripts, undefined);
     assert.equal(bodies[1].material_ref, 'ref_0123456789abcdef');
     assert.equal(bodies[1].scripts, undefined);
     assert.deepEqual(bodies[1].request, formRequest);
@@ -59,10 +61,10 @@ test('delegates header/form output, exact request, fresh state, usage and cache 
     assert.ok(!inspect(sdk).includes('private-api-key'));
     assert.ok(!inspect(headers).includes('private-generated-value'));
     await sdk.dispose();
-    await assert.rejects(sdk.generate(material, { request }), e => e instanceof RayonError && e.kind === 'validation');
+    await assert.rejects(sdk.generate({ ...readyMaterial, request }), e => e instanceof RayonError && e.kind === 'validation');
 }));
 test('preserves unknown billing outcomes without retrying or target submission', async () => api(async (sdk, bodies, paths) => {
-    await assert.rejects(sdk.generate(material, { request }), error => {
+    await assert.rejects(sdk.generate({ ...readyMaterial, request }), error => {
         assert.ok(error instanceof RayonError);
         assert.equal(error.billingStatus, 'unknown');
         assert.ok(!inspect(error).includes('private-api-key'));

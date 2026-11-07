@@ -1,13 +1,13 @@
 import {
-    RayonClient,
-    type ClientOptions, type RequestOptions, type TargetRequest, type HeaderShapeRequest,
+    RayonClient, RayonError,
+    type ClientOptions, type RequestOptions, type TargetRequest, type HeaderShapeRequest, type FormShapeRequest, type ShapeRequest,
     type MaterialPreparation, type ReadyMaterial, type PreparationOptions, type WaitUntilReadyOptions,
     type FormMetadata, type ShapeResult, type FormShapeResult, type UsageResult,
 } from 'rayon-sdk-js';
 import type { Page } from 'playwright-core';
 import { collect, validateOptions, MaterialCollectionError, type CollectedMaterial, type CollectOptions } from './collector.js';
 export { MaterialCollectionError } from './collector.js';
-export type { CollectedMaterial, PreparedMaterial, CollectOptions, CollectionErrorCode } from './collector.js';
+export type { CollectedMaterial, CollectOptions, CollectionErrorCode } from './collector.js';
 export { RayonError, validate_profile } from 'rayon-sdk-js';
 export type {
     MaterialPreparation, ReadyMaterial, PreparationState, PreparationError, PreparationOptions, GetPreparationOptions, WaitUntilReadyOptions,
@@ -52,13 +52,14 @@ export class RayonPlaywright {
     }
     /** Generate with managed public material; no collection is required. */
     generateManaged(input: HeaderShapeRequest, options?: RequestOptions): Promise<ShapeResult> {
+        if (Object.hasOwn(input, "scripts") || Object.hasOwn(input, "material_ref")) throw new RayonError("validation");
         return this.#client.generate(input, options);
     }
-    generate(material: CollectedMaterial, input: HeaderGeneration, options?: RequestOptions): Promise<ShapeResult>;
-    generate(material: CollectedMaterial, input: FormGeneration, options?: RequestOptions): Promise<FormShapeResult>;
-    generate(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: RequestOptions): Promise<ShapeResult | FormShapeResult>;
-    generate(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: RequestOptions): Promise<ShapeResult | FormShapeResult> {
-        return this.#client.generate({ ...material, ...input }, options);
+    generate(input: HeaderShapeRequest, options?: RequestOptions): Promise<ShapeResult>;
+    generate(input: FormShapeRequest, options?: RequestOptions): Promise<FormShapeResult>;
+    generate(input: ShapeRequest<"header" | "form">, options?: RequestOptions): Promise<ShapeResult | FormShapeResult>;
+    generate(input: ShapeRequest<"header" | "form">, options?: RequestOptions): Promise<ShapeResult | FormShapeResult> {
+        return this.#client.generate(input, options);
     }
     /** Starts server preparation with the exact generation context. Collection alone never prepares. */
     prepareMaterial(material: CollectedMaterial, input: HeaderGeneration | FormGeneration, options?: PreparationOptions): Promise<MaterialPreparation> {

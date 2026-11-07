@@ -6,11 +6,13 @@ a browser or sends the target request.
 
 ## Install
 
+Unpublished release candidate. Requires the preparation-required server and core SDK major 3.
+
 Requires Node.js 20.18.1+ and your existing Playwright setup. ESM, CommonJS and
 TypeScript are included.
 
 ```sh
-npm install rayon-sdk-playwright@^1.1.0 playwright-core
+npm install rayon-sdk-playwright@^2.0.0-rc.1 playwright-core
 ```
 
 ## Generate with managed material
@@ -30,9 +32,6 @@ try {
       content_type: 'application/json', body: '{}',
     },
   });
-  if (result.fallback_reason) {
-    console.warn('A fallback was used. Contact support with request ID:', result.request_id);
-  }
   // Apply every result.headers entry, including optional a0, with your target client.
 } finally {
   await client.close();
@@ -45,9 +44,8 @@ and `material_ref` omitted on later automatic calls so updates are selected.
 No page capture or preparation is required for this flow. Managed form mode is
 not supported; use explicit material for form telemetry.
 
-Fallback and operation metadata come from the core SDK. A non-null
-`fallback_reason` means a fallback was used; report the request ID to support.
-Timing alone does not identify fallback. Customer uploads stay private.
+Generation errors include safe request metadata. Retain the request ID for support.
+Custom uploads stay private.
 
 ## Optional collection from an existing page
 
@@ -72,11 +70,14 @@ async function generateForPage(page: Page) {
       },
       // includeDocumentCookie: true, // Opt in only when required.
     });
-    return await rayon.generate(material, {
-      request: {
-        url: 'https://example.com/submit', method: 'POST',
-        content_type: 'application/json', body: ' {"item": 1}\n',
-      },
+    const targetRequest = {
+      url:'https://example.com/submit', method:'POST',
+      content_type:'application/json', body:' {"item": 1}\n',
+    };
+    const ready = await rayon.prepareAndWait(material, { request: targetRequest });
+    const { scripts, ...context } = material;
+    return await rayon.generate({ ...context, material_ref: ready.material_ref,
+      request: targetRequest,
     });
   } finally {
     await rayon.close(); // Leaves your page/context/browser open.
@@ -88,8 +89,8 @@ Apply returned `headers` unchanged using your existing target client/session.
 The adapter never sends the target request or applies output automatically.
 Keep one client across generations for connection pooling and explicit material reuse. Supply the exact current
 request every time; recollect or update snapshots when scripts, profile or cookies
-change. Collected `{ source_url, scripts, profile, document_cookie? }` also works
-with `generate` directly. Form mode returns `form_fields` and `form_body`.
+change. Pass collected sources to preparation, then use the ready reference for generation.
+Form mode returns `form_fields` and `form_body`.
 
 Collection observes only the explicitly listed main-frame script requests started
 during `action`. Default deadline: 30 seconds. Limits: 16 scripts, 2 MiB each,
@@ -109,24 +110,26 @@ Development: `npm ci`, `npx playwright-core install chromium`, `npm test`,
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to reuse a browser. See
 [release instructions](RELEASE.md), [security](SECURITY.md), and [license](LICENSE).
 
-## Optional server preparation
+## Required custom preparation
 
-`collectMaterial` returns `CollectedMaterial`; the deprecated `PreparedMaterial`
-alias means collected inputs, not server readiness. To check explicit material
-before a workload:
+`collectMaterial` returns `CollectedMaterial`, not server readiness. The ambiguous
+`PreparedMaterial` collection alias has been removed; use `ReadyMaterial` for
+confirmed server readiness. Prepare custom material
+before generation:
 
 ```typescript
 const collected = await client.collectMaterial(page, collectionOptions);
 const job = await client.prepareMaterial(collected, { request: targetRequest });
 const ready = await client.waitUntilReady(job.preparation_id, { waitTimeoutMs: 60_000 });
 // Or: await client.prepareAndWait(collected, { request: targetRequest });
-const result = await client.generate(collected, { request: targetRequest });
+const { scripts, ...context } = collected;
+const result = await client.generate({ ...context, request: targetRequest, material_ref: ready.material_ref });
 ```
 
 `getPreparation` and bounded wait helpers remain available. Wait timeout or abort
 leaves the server job running; resume with the typed error's `preparationId`.
-Usable validated defaulted mappings can become ready. Required output validation
-still applies. Readiness expires separately from the source reference.
+Only successfully validated material becomes ready. Readiness expires separately
+from the source reference.
 
 [Quickstart](https://docs.rayonapi.com/quickstart) · [Adapter reference](docs/reference.md) ·
 [Release instructions](RELEASE.md)

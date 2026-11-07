@@ -6,9 +6,7 @@ export interface CollectedMaterial {
     profile: BrowserProfile;
     document_cookie?: string;
 }
-/** @deprecated Collection is not server readiness. Use CollectedMaterial. */
-export type PreparedMaterial = CollectedMaterial;
-
+// Collection is not server readiness; ReadyMaterial comes from preparation.
 export interface CollectOptions {
     /** Absolute HTTP(S) URLs, in the exact order to pass to Rayon. */
     scriptUrls: readonly string[];

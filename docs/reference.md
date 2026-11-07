@@ -3,10 +3,10 @@
 ## Managed generation
 
 `generateManaged({ source_url, profile, request, document_cookie? }, options?)`
-uses current registered public material in header mode. Omit both material fields
-on every automatic call. It needs no page or collector. `fallback_reason` and
-`fallback_message` are retained by the core SDK; report fallback with the request
-ID. Explicit `generate(material, input, options?)` remains unchanged.
+selects ready managed header material without collection. Explicit material fields
+are rejected by that helper. `generate(input, options?)` accepts a ready reference
+with its full supported context, or managed header input. Raw collected scripts
+must go through preparation. Generation never uploads scripts or starts preparation.
 
 ## Collection contract
 
@@ -61,24 +61,22 @@ this adapter. Keep collected material and cookies private.
 ## Form mode and errors
 
 ```typescript
-const result = await rayon.generate(material, {
-  mode: 'form',
-  form: { id: 'checkout' },
-  request: {
-    url: 'https://example.com/submit', method: 'POST',
-    content_type: 'application/x-www-form-urlencoded',
-    body: 'tag=one&tag=two&csrf=a%2Bb',
-  },
-});
-// result.form_fields / result.form_body contain telemetry only.
-// Prepend form_body once to the exact application body with your target client.
+const input = {
+  mode:'form' as const,
+  form:{id:'checkout'},
+  request:{url:'https://example.com/submit',method:'POST',
+    content_type:'application/x-www-form-urlencoded',body:'tag=one&tag=two&csrf=a%2Bb'},
+};
+const ready = await rayon.prepareAndWait(material, input);
+const { scripts, ...context } = material;
+const result = await rayon.generate({...context,...input,material_ref:ready.material_ref});
+// Prepend result.form_body once to the exact application body.
 ```
 
 See [form payload integration](https://docs.rayonapi.com/form-payload-integration).
-Header/form result types, validation, redacted inspection, caching and API errors
+Header/form result types, validation, redacted inspection and API errors
 are delegated to `rayon-sdk-js`. The adapter adds no generation retries. The core
-may recover once only after a confirmed uncharged material miss; ambiguous billing
-outcomes are never automatically retried. Check request history before retrying
+never uploads sources or retries generation; refresh through preparation outside solve calls. Check request history before retrying
 an uncertain result. See [API error guidance](https://docs.rayonapi.com/errors).
 
 Collection throws `MaterialCollectionError` with a constant, private-data-free
