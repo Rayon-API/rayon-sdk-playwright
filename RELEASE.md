@@ -45,7 +45,7 @@ local core package for offline verification. No package is published by this wor
 
 ## Preparation-required release candidate
 
-This branch is not published or deployed. Generation rejects raw sources and
+Use this release with a compatible server. Generation rejects raw sources and
 never uploads sources, starts learning or retries on expiry. Custom material
 must reach ready before its reference is used. Make compatible preparation available, distribute reviewed SDKs, migrate clients,
 then enforce the new solve contract. Publish core SDK major 3 before Playwright major 2.
