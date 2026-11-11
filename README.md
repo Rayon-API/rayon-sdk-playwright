@@ -6,13 +6,13 @@ a browser or sends the target request.
 
 ## Install
 
-Release candidate. Requires the preparation-required server and core SDK major 3.
+Requires the preparation-required server and core SDK major 3.
 
 Requires Node.js 20.18.1+ and your existing Playwright setup. ESM, CommonJS and
 TypeScript are included.
 
 ```sh
-npm install rayon-sdk-playwright@^2.0.0-rc.2 playwright-core
+npm install rayon-sdk-playwright@^2.0.0 playwright-core
 ```
 
 ## Generate with managed material
@@ -39,8 +39,9 @@ try {
 ```
 
 Replace the reserved URLs with your approved supported public source and endpoint.
-`profile: {}` uses defaults; supply measured values when needed. Keep `scripts`
-and `material_ref` omitted on later automatic calls so updates are selected.
+`profile: {}` uses the default managed profile. Use the collection and preparation
+flow below for your own profile or material. Keep `scripts` and `material_ref`
+omitted on later automatic calls so updates are selected.
 No page capture or preparation is required for this flow. Managed form mode is
 not supported; use explicit material for form telemetry.
 
