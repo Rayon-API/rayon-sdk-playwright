@@ -6,7 +6,8 @@ permissions:
   contents: read
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     environment: npm
     permissions:
       contents: read
@@ -36,7 +37,12 @@ jobs:
           if (prerelease !== (process.env.RELEASE_PRERELEASE === 'true')) throw new Error('Release prerelease flag must match package version');
           JS
       - run: npm ci
-      - run: npx playwright-core install --with-deps chromium
+      - name: Select the runner's installed browser
+        run: |
+          browser_path="$(command -v google-chrome)"
+          test -x "$browser_path"
+          "$browser_path" --version
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$browser_path" >> "$GITHUB_ENV"
       - run: npm test
       - run: npm run build
       - run: npm run test:package
