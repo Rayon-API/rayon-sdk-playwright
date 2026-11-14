@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1
+
+- Require core SDK 3.0.1 for managed preparation fallback compatibility.
+- Preserve degraded execution metadata without retrying generation.
+
 ## 2.0.0
 
 - Require preparation for custom material; use ready references for generation.

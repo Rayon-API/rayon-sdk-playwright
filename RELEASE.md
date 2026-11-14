@@ -26,3 +26,11 @@ Publish through the authorized GitHub release workflow and the scoped npm truste
 publisher in environment `npm`. The workflow stores no registry token. Local
 tests and builds do not publish. Never include customer material, keys, cookies
 or node_modules in a package.
+
+## Compatibility patch 2.0.1
+
+Use the published JavaScript SDK 3.0.1 registry artifact. Verify managed preparation
+fallback through the ordinary installed dependency, including its capability
+header and degraded metadata. Do not use a local module-loader override for
+release qualification. Existing native responses and preparation flows remain
+supported; generation is never replayed automatically.
